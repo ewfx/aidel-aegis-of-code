@@ -1,5 +1,3 @@
-
-
 # 🔧 Install required packages
 !pip install -q transformers sentence-transformers fuzzywuzzy[speedup] faiss-cpu pandas
 # Facebook AI Similarity Search (FAISS)
