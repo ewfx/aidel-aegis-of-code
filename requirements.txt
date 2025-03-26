@@ -1,0 +1,7 @@
+pandas
+faiss-cpu
+torch
+fuzzywuzzy
+sentence-transformers
+transformers
+gradio

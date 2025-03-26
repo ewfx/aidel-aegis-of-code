@@ -1,0 +1,7 @@
+Architecture Overview:
+
+1. NER Extraction
+2. Embedding and Similarity Check
+3. Risk Heuristics
+4. LLM-based Justification
+5. JSON Output

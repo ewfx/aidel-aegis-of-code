@@ -1,0 +1,16 @@
+{
+    "Transaction ID": "TXN001",
+    "Extracted Entity": [
+        "XBridge Ventures"
+    ],
+    "Entity Type": [
+        "Corporation"
+    ],
+    "Risk Score": 0.85,
+    "Supporting Evidence": [
+        "Sanctions List",
+        "Company Website"
+    ],
+    "Confidence Score": 0.9,
+    "Reason": "XBridge Ventures previously flagged in compliance reports for offshore dealings."
+}
