@@ -1,3 +1,5 @@
+
+
 # 🔧 Install required packages
 !pip install -q transformers sentence-transformers fuzzywuzzy[speedup] faiss-cpu pandas
 # Facebook AI Similarity Search (FAISS)
@@ -15,8 +17,16 @@ import json
 transactions = [
     {"id": 1, "description": "Transfer to ShellCorp Intl in Cayman Islands."},
     {"id": 2, "description": "Donation sent to GlobalUnity Non-Profit Org."},
-    {"id": 3, "description": "Payment made to XBridge Ventures, previously flagged by compliance."}
+    {"id": 3, "description": "Payment made to XBridge Ventures, previously flagged by compliance."},
+    {"id": 4, "description": "Wire transfer to Oceanic Holdings in Singapore."},
+    {"id": 5, "description": "Contribution received by HelpingHands Charity Foundation."},
+    {"id": 6, "description": "Settlement payment processed for MetroFinance Inc, under review."},
+    {"id": 7, "description": "Invoice payment to GlobalTrade Partners Ltd in Dubai."},
+    {"id": 8, "description": "Refund issued by RetailCentral Corp for overcharge."},
+    {"id": 9, "description": "Reimbursement from BlueChip LLC for travel expenses."},
+    {"id": 10, "description": "Payment processed to SecureInvestments, pending further verification."}
 ]
+
 
 df = pd.DataFrame(transactions)
 
@@ -112,7 +122,8 @@ for row in df.itertuples():
     }
     print(json.dumps(output, indent=2))
 
-# 🔗 OpenCorporates API lookup function is disbaled as API Token request has been rejected
+# 🔗 OpenCorporates API lookup function
+# This has been commented as API token request was rejected.
 # import requests
 
 # def lookup_entity_opencorp(name, jurisdiction_code=""):
@@ -172,79 +183,3 @@ for row in df.itertuples():
 #         "entities": row.risk_eval
 #     }
 #     print(json.dumps(output, indent=2))
-
-# Install Required Packages
-!pip install -q gradio transformers sentence-transformers fuzzywuzzy[speedup] faiss-cpu pandas
-
-# Import Libraries
-import gradio as gr
-import pandas as pd
-import faiss
-from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-from sentence_transformers import SentenceTransformer
-from fuzzywuzzy import fuzz
-import torch
-import json
-
-# Load Models
-ner_pipeline = pipeline("ner", grouped_entities=True)
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
-llm = "google/flan-t5-base"
-tokenizer = AutoTokenizer.from_pretrained(llm)
-model = AutoModelForSeq2SeqLM.from_pretrained(llm)
-
-# Known Entities and FAISS Setup
-known_entities = ["Shell Corporation International", "UNICEF", "Quantum Holdings Ltd", "Save the Children"]
-known_embeds = embed_model.encode(known_entities)
-index = faiss.IndexFlatL2(known_embeds.shape[1])
-index.add(known_embeds)
-
-# Justification Function
-def justify(entity, match, score):
-    prompt = f"{entity} matched to {match} and may have risk due to a score of {score}."
-    inputs = tokenizer(prompt, return_tensors="pt")
-    outputs = model.generate(**inputs)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-# Risk Scoring Function
-def verify_and_score(extracted_entities):
-    results = []
-    for entity in extracted_entities:
-        embed = embed_model.encode([entity])
-        D, I = index.search(embed, 1)
-        match = known_entities[I[0][0]]
-        match_score = fuzz.token_sort_ratio(entity, match)
-        risk_score = 0
-        if "shell" in entity.lower() or "cayman" in entity.lower():
-            risk_score += 70
-        if match_score < 60:
-            risk_score += 20
-        justification = justify(entity, match, risk_score)
-        results.append({
-            "entity": entity,
-            "matched_to": match,
-            "match_score": match_score,
-            "risk_score": risk_score,
-            "justification": justification
-        })
-    return results
-
-# Main Function for Gradio
-def analyze_transaction(description):
-    entities = [ent['word'] for ent in ner_pipeline(description)]
-    analysis = verify_and_score(entities)
-    return json.dumps({
-        "transaction_description": description,
-        "entities": analysis
-    }, indent=2)
-
-# Gradio Interface
-iface = gr.Interface(
-    fn=analyze_transaction,
-    inputs=gr.Textbox(lines=5, label="Enter Transaction Description"),
-    outputs="json",
-    title="AI-Driven Entity Risk Analyzer",
-    description="Extracts entities from transactions, matches them, scores risk, and justifies the reasoning."
-)
-
-iface.launch()
